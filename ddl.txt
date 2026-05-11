@@ -1,0 +1,65 @@
+-- إضافة Unique Constraints لبيانات الدخول
+CREATE TABLE investigator (
+    investigator_id NUMBER PRIMARY KEY,
+    username        VARCHAR2(30) NOT NULL UNIQUE,
+    password        VARCHAR2(255) NOT NULL, 
+    email           VARCHAR2(100) NOT NULL UNIQUE, 
+    phone_number    VARCHAR2(20) NOT NULL
+);
+
+-- تعديل بسيط في الوصف ليقبل نصوص أطول
+CREATE TABLE cases (
+    case_id         NUMBER PRIMARY KEY,
+    case_title      VARCHAR2(100) NOT NULL,
+    description     CLOB NOT NULL, -- استخدام CLOB لو الوصف طويل
+    status          VARCHAR2(30) DEFAULT 'Open' NOT NULL,
+    investigator_id NUMBER NOT NULL,
+    CONSTRAINT cases_investigator_fk FOREIGN KEY (investigator_id) 
+        REFERENCES investigator (investigator_id)
+);
+
+-- المشتبه به: إضافة UNIQUE للرقم القومي
+CREATE TABLE suspects (
+    suspect_id  NUMBER PRIMARY KEY,
+    full_name   VARCHAR2(100) NOT NULL,
+    national_id VARCHAR2(255) NOT NULL UNIQUE,
+    age         NUMBER NOT NULL,
+    case_id     NUMBER NOT NULL,
+    CONSTRAINT suspects_cases_fk FOREIGN KEY (case_id) 
+        REFERENCES cases (case_id)
+);
+
+-- ربط الأسئلة بلحظة زمنية (Timestamp)
+CREATE TABLE questions_logs (
+    log_id                NUMBER PRIMARY KEY,
+    session_id            NUMBER NOT NULL, 
+    question_text         VARCHAR2(1000) NOT NULL, 
+    heart_rate_at_moment  NUMBER NOT NULL,
+    facial_reaction_score NUMBER(5,2) NOT NULL, -- قيمة رقمية بدقة أعلى
+    timestamp_at_question TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- عشان تعرف السؤال اتسأل امتى بالظبط في الجلسة
+    is_flagged            CHAR(1) DEFAULT 'N' CHECK (is_flagged IN ('Y', 'N')),
+    CONSTRAINT logs_session_fk FOREIGN KEY (session_id) 
+        REFERENCES analysis_sessions (session_id)
+);
+
+
+
+
+
+
+
+
+
+
+CREATE TABLE SESSIONS (
+    SESSION_CODE VARCHAR2(20) PRIMARY KEY, -- الكود اللي بيطلع (BC-0000)
+    INVESTIGATOR_ID NUMBER REFERENCES INVESTIGATOR(INVESTIGATOR_ID), -- ربط بالمحقق
+    CREATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE SESSIONS (
+    SESSION_CODE VARCHAR2(20) PRIMARY KEY,
+    INVESTIGATOR_ID NUMBER,
+    CREATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_investigator FOREIGN KEY (INVESTIGATOR_ID) 
+    REFERENCES INVESTIGATOR(INVESTIGATOR_ID)
+);
