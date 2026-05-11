@@ -1,0 +1,100 @@
+package com.security.auth;
+
+import java.sql.*;
+import java.util.*;
+
+public class InvestigationDAO {
+
+    // 1. دالة جلب أكواد الجلسات للمحقق (للعرض في الداشبورد)
+    public List<String> getMySessions(int invId) {
+        List<String> codes = new ArrayList<>();
+        String sql = "SELECT SESSION_CODE FROM SESSIONS WHERE INVESTIGATOR_ID = ? ORDER BY CREATED_AT DESC";
+        
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, invId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                codes.add(rs.getString("SESSION_CODE"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return codes;
+    }
+
+    // 2. الدالة الرئيسية لجلب الجلسات بأسئلتها (للعرض في صفحة view_questions.jsp)
+    public Map<String, List<String[]>> getAllSessionsWithQuestions(int invId) {
+        Map<String, List<String[]>> archiveMap = new LinkedHashMap<>();
+        
+        // الكويري بيجيب البيانات من جدول QUESTIONS المربوط بجدول SESSIONS للمحقق الحالي
+        String query = "SELECT Q_ID, SESSION_CODE, QUESTION_TEXT " +
+                       "FROM QUESTIONS " +
+                       "WHERE SESSION_CODE IN (SELECT SESSION_CODE FROM SESSIONS WHERE INVESTIGATOR_ID = ?) " +
+                       "ORDER BY Q_ID DESC";
+        
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            
+            ps.setInt(1, invId);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                String code = rs.getString("SESSION_CODE");
+                String q = rs.getString("QUESTION_TEXT");
+                String id = String.valueOf(rs.getInt("Q_ID"));
+                String a = "ENCRYPTED_RESPONSE"; // لو عندك عمود إجابة في الجدول غير الكلمة دي باسم العمود
+                
+                archiveMap.putIfAbsent(code, new ArrayList<>());
+                archiveMap.get(code).add(new String[]{q, a, id});
+            }
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+        }
+        return archiveMap;
+    }
+
+    // 3. ميثود مسح سؤال واحد من جدول QUESTIONS
+    public void deleteSingleQuestion(int qId) {
+        String query = "DELETE FROM QUESTIONS WHERE Q_ID = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, qId);
+            ps.executeUpdate();
+            System.out.println("Node " + qId + " erased from database.");
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+        }
+    }
+
+    // 4. ميثود مسح جلسة كاملة (بتمسح الأسئلة الأول وبعدين الجلسة عشان الـ Foreign Key)
+    public void deleteSession(String sessionCode) {
+        String delQuestions = "DELETE FROM QUESTIONS WHERE SESSION_CODE = ?";
+        String delSession = "DELETE FROM SESSIONS WHERE SESSION_CODE = ?";
+        
+        try (Connection conn = DBConnection.getConnection()) {
+            conn.setAutoCommit(false); // بنفتح Transaction عشان لو حاجة فشلت نرجع في كلامنا
+            
+            try (PreparedStatement psQ = conn.prepareStatement(delQuestions);
+                 PreparedStatement psS = conn.prepareStatement(delSession)) {
+                
+                // أولاً: مسح كل الأسئلة المرتبطة بالجلسة
+                psQ.setString(1, sessionCode);
+                psQ.executeUpdate();
+                
+                // ثانياً: مسح الجلسة نفسها
+                psS.setString(1, sessionCode);
+                psS.executeUpdate();
+                
+                conn.commit();
+                System.out.println("Full Session Wiped: " + sessionCode);
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            }
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+        }
+    }
+}

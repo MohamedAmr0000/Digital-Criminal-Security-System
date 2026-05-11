@@ -1,0 +1,581 @@
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page import="java.sql.*, com.security.auth.DBConnection"%>
+<%
+    // 1. تأمين الصفحة
+    if (session.getAttribute("username") == null) {
+        response.sendRedirect("login.html");
+        return;
+    }
+    
+    // 2. سحب البيانات
+    String username = (String) session.getAttribute("username");
+    String profileImg = (String) session.getAttribute("profile_img");
+%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Criminal Security System</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #e01111;
+    --red-bright: #ff2222;
+    --red-dim: #8b0000;
+    --red-glow: rgba(224,17,17,0.35);
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #181818;
+    --border: rgba(224,17,17,0.25);
+    --text: #c8c8c8;
+    --text-dim: #666;
+    --mono: 'Share Tech Mono', monospace;
+    --head: 'Orbitron', monospace;
+    --body: 'Rajdhani', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    font-size: 14px;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    width: 200px;
+    min-width: 200px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    border: 2px solid var(--red);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(224,17,17,0.1);
+    box-shadow: 0 0 10px var(--red-glow);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .logo-text .name {
+    font-family: var(--head);
+    font-size: 10px;
+    color: var(--red-bright);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+  }
+
+  .logo-text .sub {
+    font-family: var(--mono);
+    font-size: 8px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+
+  .nav { flex: 1; padding: 12px 0; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-family: var(--body);
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text-dim);
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+    user-select: none;
+  }
+
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+
+  .nav-item.active {
+    color: #fff;
+    background: rgba(224,17,17,0.12);
+    border-left-color: var(--red);
+  }
+
+  .nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
+
+  .nav-logout { border-top: 1px solid var(--border); padding: 12px 0; }
+
+  /* ===== TOPBAR ===== */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+
+  .welcome { flex: 1; font-size: 16px; font-weight: 500; }
+  .welcome span { color: var(--red-bright); font-weight: 700; }
+
+  .search-bar {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 18px;
+    width: 260px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .search-bar:focus-within {
+    border-color: var(--red);
+    box-shadow: 0 0 8px var(--red-glow);
+  }
+
+  .search-bar input {
+    background: none; border: none; outline: none;
+    color: var(--text); font-family: var(--mono); font-size: 12px; width: 100%;
+  }
+
+  .search-bar input::placeholder { color: var(--text-dim); }
+
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+
+  .datetime { font-family: var(--mono); font-size: 11px; color: var(--text-dim); line-height: 1.6; text-align: right; }
+  .datetime .date { color: var(--text); }
+
+  .help-btn {
+    display: flex; align-items: center; gap: 6px;
+    border: 1px solid var(--red);
+    border-radius: 6px; padding: 6px 14px;
+    font-family: var(--body); font-size: 13px; font-weight: 600;
+    color: var(--red-bright); cursor: pointer; background: transparent;
+    transition: all 0.2s;
+  }
+
+  .help-btn:hover { background: rgba(224,17,17,0.1); box-shadow: 0 0 8px var(--red-glow); }
+
+  /* ===== CONTENT ===== */
+  .content { flex: 1; display: flex; overflow: hidden; }
+
+  .hero { flex: 1; display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--red-dim) transparent; }
+
+  /* ===== HERO BANNER ===== */
+  .hero-banner {
+    position: relative;
+    height: 340px; min-height: 340px;
+    background: linear-gradient(135deg, #0a0000 0%, #1a0000 40%, #0d0000 100%);
+    overflow: hidden;
+    display: flex; align-items: flex-end;
+    padding: 32px;
+  }
+
+  .hero-bg-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(224,17,17,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(224,17,17,0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .hero-figure {
+    position: absolute; right: 180px; top: 0; bottom: 0; width: 360px;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+
+  .figure-svg {
+    width: 280px; opacity: 0.85;
+    filter: drop-shadow(0 0 30px rgba(224,17,17,0.4));
+  }
+
+  .heartbeat {
+    position: absolute; right: 0; top: 0; bottom: 0; width: 200px;
+    display: flex; align-items: center;
+  }
+
+  .hb-svg { width: 100%; }
+
+  .hero-content { position: relative; z-index: 2; max-width: 480px; }
+
+  .hero-title {
+    font-family: var(--head);
+    font-size: 30px; font-weight: 900;
+    color: var(--red-bright);
+    line-height: 1.1; letter-spacing: 0.05em;
+    text-shadow: 0 0 30px rgba(255,34,34,0.5);
+    animation: flicker 4s infinite;
+  }
+
+  .hero-sub { font-size: 13px; color: var(--text); margin-top: 4px; letter-spacing: 0.05em; }
+  .hero-sub-line { width: 50px; height: 2px; background: var(--red); margin: 8px 0 12px; }
+  .hero-desc { font-size: 13px; color: var(--text-dim); line-height: 1.6; max-width: 380px; }
+
+  /* ===== ABOUT ===== */
+  .about-section { padding: 24px; border-top: 1px solid var(--border); }
+
+  .section-label {
+    font-family: var(--head); font-size: 11px; font-weight: 700;
+    color: var(--red-bright); letter-spacing: 0.15em; margin-bottom: 8px;
+  }
+
+  .about-text { font-size: 13px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.5; }
+
+  .features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+
+  .feature {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px;
+    transition: all 0.25s; cursor: default;
+  }
+
+  .feature:hover {
+    border-color: var(--red);
+    background: rgba(224,17,17,0.06);
+    box-shadow: 0 0 20px rgba(224,17,17,0.2);
+    transform: translateY(-2px);
+  }
+
+  .feature-icon { font-size: 22px; margin-bottom: 8px; }
+  .feature-name { font-weight: 700; font-size: 13px; color: #fff; margin-bottom: 4px; }
+  .feature-desc { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+
+  .quote-bar {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 20px;
+  }
+
+  .quote-icon { font-size: 24px; opacity: 0.6; }
+  .quote-text { font-family: var(--mono); font-size: 12px; color: var(--red-bright); letter-spacing: 0.05em; }
+
+  /* ===== PANEL ===== */
+  .how-panel {
+    width: 260px; min-width: 260px;
+    background: var(--bg2); border-left: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--red-dim) transparent;
+    animation: slideIn 0.4s ease;
+  }
+
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; border-bottom: 1px solid var(--border);
+  }
+
+  .panel-title { font-family: var(--head); font-size: 13px; font-weight: 700; color: var(--red-bright); letter-spacing: 0.05em; }
+
+  .panel-close {
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text-dim); font-size: 14px;
+    border-radius: 4px; transition: all 0.2s;
+  }
+
+  .panel-close:hover { background: rgba(224,17,17,0.15); color: var(--red-bright); }
+
+  .panel-steps { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+  .step { display: flex; gap: 12px; }
+
+  .step-num {
+    width: 24px; height: 24px; min-width: 24px;
+    border: 1.5px solid var(--red); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 11px; color: var(--red-bright); font-weight: 700;
+  }
+
+  .step-title { font-weight: 700; font-size: 13px; color: #fff; margin-bottom: 3px; }
+  .step-desc { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+
+  .panel-alert {
+    margin: 16px; border: 1px solid var(--red); border-radius: 6px;
+    padding: 10px 12px; display: flex; gap: 8px; align-items: flex-start;
+    background: rgba(224,17,17,0.06); font-size: 11px; color: var(--red-bright); line-height: 1.5;
+  }
+
+  /* ===== SCANLINES ===== */
+  .scanlines {
+    position: fixed; inset: 0; pointer-events: none; z-index: 1000;
+    background: repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes flicker {
+    0%, 97%, 100% { opacity: 1; }
+    98%  { opacity: 0.85; }
+    99%  { opacity: 1; }
+    99.5%{ opacity: 0.7; }
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(30px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+
+  @keyframes pulse-line {
+    0%   { stroke-dashoffset:  300; }
+    100% { stroke-dashoffset: -300; }
+  }
+
+  .hb-path {
+    stroke-dasharray: 300;
+    stroke-dashoffset: 300;
+    animation: pulse-line 2s linear infinite;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="scanlines"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">🔒</div>
+    <div class="logo-text">
+      <div class="name">DIGITAL<br>CRIMINAL</div>
+      <div class="sub">SECURITY SYSTEM</div>
+    </div>
+  </div>
+  <div class="nav">
+    <div class="nav-item active"><span class="icon">⊞</span> Dashboard</div>
+<a href="liveHeart.jsp">Live Monitor</a>
+
+<button onclick="location.href='LiveHeart.jsp'">Live Monitor</button>
+    <div class="nav-item" onclick="location.href='ask_session.jsp'" style="cursor: pointer;">
+    <span class="icon">≡</span> Sessions
+</div>
+    <div class="nav-item"><span class="icon">▮</span> Results</div>
+    <div class="nav-item"><span class="icon">⊙</span> History</div>
+    <div class="nav-item"><span class="icon">⬛</span> Devices</div>
+<div class="nav-item" onclick="location.href='dathbord.jsp'" style="cursor: pointer;">
+    <span class="icon">⚇</span> Users
+</div>
+
+    <div class="nav-item"><span class="icon">📋</span> Reports</div>
+    <div class="nav-item"><span class="icon">⚙</span> Settings</div>
+  </div>
+  <div class="nav-logout">
+    <div class="nav-item"><span class="icon">↩</span> Logout</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+<div class="welcome">Welcome back, <span><%= username.toUpperCase() %></span> 👤</div>
+    <div class="search-bar">
+      <span style="color:var(--text-dim);font-size:13px;">🔍</span>
+      <input type="text" id="sessionSearch" placeholder="Enter session code..."><!-- comment -->    </div>
+    <div class="topbar-right">
+      <div class="datetime">
+        <div class="date" id="dt-date"></div>
+        <div id="dt-time"></div>
+      </div>
+      <button class="help-btn">❓ Help</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="hero">
+
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <div class="hero-bg-grid"></div>
+
+        <div class="hero-figure">
+          <svg class="figure-svg" viewBox="0 0 200 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="screenGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#e01111" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#e01111" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <ellipse cx="100" cy="60" rx="70" ry="75" fill="#1a0000"/>
+            <ellipse cx="100" cy="55" rx="55" ry="60" fill="#0d0000"/>
+            <ellipse cx="100" cy="85" rx="35" ry="40" fill="#050000"/>
+            <path d="M30 120 Q20 200 15 310 L185 310 Q180 200 170 120 Q140 145 100 148 Q60 145 30 120Z" fill="#110000"/>
+            <ellipse cx="100" cy="125" rx="72" ry="18" fill="#1a0000"/>
+            <rect x="55" y="255" width="90" height="52" rx="4" fill="#0d0d0d" stroke="#e01111" stroke-width="1"/>
+            <rect x="58" y="258" width="84" height="42" rx="2" fill="#050505"/>
+            <rect x="60" y="260" width="80" height="38" rx="1" fill="url(#screenGrad)" opacity="0.5"/>
+            <ellipse cx="87"  cy="88" rx="6" ry="4" fill="#e01111" opacity="0.15"/>
+            <ellipse cx="113" cy="88" rx="6" ry="4" fill="#e01111" opacity="0.15"/>
+          </svg>
+        </div>
+
+        <div class="heartbeat">
+          <svg class="hb-svg" viewBox="0 0 180 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path class="hb-path"
+              d="M0 40 L30 40 L38 20 L46 60 L54 10 L62 70 L70 40 L180 40"
+              stroke="#e01111" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>0
+
+        <div class="hero-content">
+          <div class="hero-title">DIGITAL CRIMINAL<br>SECURITY SYSTEM</div>
+          <div class="hero-sub">Detect the truth. Reveal the lies.</div>
+          <div class="hero-sub-line"></div>
+          <div class="hero-desc">Digital Criminal Security System is an advanced lie detection platform that uses real-time heart rate monitoring and intelligent algorithms to analyze responses and uncover the truth.</div>
+        </div>
+      </div>
+
+      <!-- About -->
+      <div class="about-section">
+        <div class="section-label">ABOUT THE SYSTEM</div>
+        <div class="about-text">Our system combines biometric data with psychological analysis to provide accurate lie detection through heart rate monitoring.</div>
+
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon">❤️</div>
+            <div class="feature-name">Heart Rate Analysis</div>
+            <div class="feature-desc">Real-time heart rate monitoring captures physiological changes that occur during questions.</div>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🧠</div>
+            <div class="feature-name">Intelligent Algorithms</div>
+            <div class="feature-desc">Advanced machine learning algorithms analyze data patterns to detect signs of deception.</div>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🔒</div>
+            <div class="feature-name">Secure &amp; Private</div>
+            <div class="feature-desc">All data is encrypted and stored securely. Your privacy and security are our priority.</div>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">📈</div>
+            <div class="feature-name">Accurate Results</div>
+            <div class="feature-desc">Get detailed insights and reliable results to make informed decisions.</div>
+          </div>
+        </div>
+
+        <div class="quote-bar">
+          <div class="quote-icon">🫆</div>
+          <div class="quote-text">"The body speaks what the mind tries to hide."</div>
+        </div>
+      </div>
+
+    </div><!-- /hero -->
+
+    <!-- Panel -->
+    <div class="how-panel" id="howPanel">
+      <div class="panel-header">
+        <div class="panel-title">How to Use</div>
+        <div class="panel-close" id="closePanel">✕</div>
+      </div>
+      <div class="panel-steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">Enter Session Code</div>
+            <div class="step-desc">Use the search bar to enter a session code provided to you.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">Load Questions</div>
+            <div class="step-desc">The system will load the corresponding questions for that session.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">Start Analysis</div>
+            <div class="step-desc">The system will analyze responses using heart rate data to detect truths and lies.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <div class="step-title">View Results</div>
+            <div class="step-desc">Check the analysis results and detailed reports in the Results section.</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-alert">
+        <span>⚠️</span>
+        <span>For any issues, contact the system administrator.</span>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+  // Live Clock
+  function updateClock() {
+    const now = new Date();
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const h = now.getHours().toString().padStart(2,'0');
+    const m = now.getMinutes().toString().padStart(2,'0');
+    const s = now.getSeconds().toString().padStart(2,'0');
+    document.getElementById('dt-date').textContent = `📅 ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+    document.getElementById('dt-time').textContent = `🕙 ${h}:${m}:${s}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Nav active
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', function() {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  // Close panel
+  document.getElementById('closePanel').addEventListener('click', function() {
+    const panel = document.getElementById('howPanel');
+    panel.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+    panel.style.transform = 'translateX(100%)';
+    panel.style.opacity = '0';
+    setTimeout(() => panel.style.display = 'none', 300);
+  });
+  
+  // البحث والتوجيه لصفحة Session1
+document.addEventListener("DOMContentLoaded", function () {
+
+    document.getElementById('sessionSearch').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+
+            const code = this.value.trim().toLowerCase();
+
+            console.log("Searching for: " + code);
+
+            if (code.includes('session')) {
+                window.location.href = 'session.jsp';
+            } else {
+                alert("Invalid Session Code: " + code);
+            }
+        }
+    });
+
+});
+</script>
+
+</body>
+</html>

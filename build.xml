@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ICU Heart Monitor PRO</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    overflow:hidden;
+    font-family:Arial;
+    background:#000;
+    color:white;
+}
+
+/* ??????? */
+#bg{
+    position:fixed;
+    inset:0;
+
+   background:
+linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.25)),
+url('https://i.postimg.cc/8zGqQzFs/mee.jpg');
+
+    background-size:cover;
+    background-position:center;
+
+    opacity:0;
+    transition:1s;
+    z-index:1;
+}
+
+/* UI */
+#content{
+    position:relative;
+    z-index:5;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+
+    height:100vh;
+    text-align:center;
+}
+
+#title{
+    font-size:34px;
+    letter-spacing:4px;
+    color:#00ffcc;
+    text-shadow:0 0 25px #00ffcc;
+    margin-bottom:25px;
+}
+
+/* Card */
+#card{
+    padding:30px 60px;
+    border-radius:20px;
+
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(0,255,204,0.3);
+    backdrop-filter:blur(10px);
+}
+
+/* BPM */
+#bpm{
+    font-size:110px;
+    color:#ff2d2d;
+    text-shadow:0 0 20px red;
+}
+
+/* Heart */
+#heart{
+    font-size:120px;
+    color:red;
+    opacity:0;
+    transition:0.4s;
+    filter:drop-shadow(0 0 20px red);
+    margin-top:10px;
+}
+
+.beat{
+    animation:pulse 0.7s infinite;
+}
+
+@keyframes pulse{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.35);}
+    100%{transform:scale(1);}
+}
+
+/* ECG */
+canvas{
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    height:240px;
+    background:rgba(0,0,0,0.25);
+    z-index:10;
+}
+
+/* click layer */
+#unlock{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    background:transparent;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="unlock"></div>
+
+<div id="bg"></div>
+
+<div id="content">
+
+<div id="title">ICU HEART MONITOR</div>
+
+<div id="card">
+
+    <div id="bpm">--</div>
+
+    <div id="heart"><i class="fa-solid fa-heart"></i></div>
+
+</div>
+
+</div>
+
+<canvas id="ecg"></canvas>
+
+<script>
+
+var ws = new WebSocket('ws://192.168.1.25/ws');
+
+let bg = document.getElementById("bg");
+let bpmText = document.getElementById("bpm");
+let heart = document.getElementById("heart");
+
+let audioCtx = null;
+let audioEnabled = false;
+
+/* ================= AUDIO INIT ================= */
+
+function initAudio(){
+    if(!audioEnabled){
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioEnabled = true;
+    }
+}
+
+/* ????? ????? ??? click */
+document.addEventListener("click", function(){
+    initAudio();
+});
+
+/* ================= HEART SOUND ================= */
+
+function heartbeatSound(){
+
+    if(!audioEnabled) return;
+
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+
+    osc.type = "sine";
+
+    osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.15);
+
+    gain.gain.value = 0.06;
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.15);
+}
+
+/* ================= ECG ================= */
+
+let canvas = document.getElementById("ecg");
+let ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = 240;
+
+let x = 0;
+let y = 120;
+
+function drawECG(active){
+
+    ctx.strokeStyle = active ? "#ff0033" : "#00ff99";
+    ctx.lineWidth = 2;
+
+    let spike = 120;
+
+    if(active){
+        let r = Math.random();
+
+        if(r > 0.98) spike = 40;
+        else if(r > 0.96) spike = 200;
+        else spike = 120 + (Math.random()*6 - 3);
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x+5, spike);
+    ctx.stroke();
+
+    y = spike;
+    x += 5;
+
+    if(x > canvas.width){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        x = 0;
+    }
+}
+
+setInterval(()=>drawECG(false),25);
+
+/* ================= WS ================= */
+
+ws.onmessage = function(event){
+
+    let data = event.data;
+
+    if(data.startsWith("FINGER_ON")){
+
+        let bpm = data.split(":")[1];
+
+        bg.style.opacity = "1";
+
+        bpmText.innerHTML = bpm;
+
+        heart.style.opacity = "1";
+        heart.classList.add("beat");
+
+        drawECG(true);
+        heartbeatSound();
+
+    }else{
+
+        bg.style.opacity = "0";
+
+        heart.style.opacity = "0";
+        heart.classList.remove("beat");
+
+        bpmText.innerHTML = "--";
+    }
+};
+
+</script>
+
+</body>
+</html>

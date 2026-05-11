@@ -1,0 +1,403 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #000;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* MAIN */
+.main {
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    color: white;
+    background: url("https://www.cnet.com/a/img/resize/9ec5a14bed80097b4d0004b676714ebbde266ba3/hub/2015/11/10/e7b12806-81cf-4d1c-9be8-5d61e4d15e87/mr-robot-rami-malek.jpg?auto=webp&fit=crop&height=675&width=1200") center/cover no-repeat;
+    background-attachment: fixed;
+    transition: background-image 0.4s ease;
+}
+
+.main::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top, rgba(32, 18, 18, 0.15), transparent 60%);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* ===== NAVBAR ===== */
+.nav {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 25px 60px;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.3);
+    flex-wrap: wrap;
+    animation: slideDown 0.8s ease;
+}
+
+/* شريط متحرك تحت النافبار */
+.nav::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0%;
+    height: 2px;
+    background: linear-gradient(90deg, red, #ff6666, red);
+    animation: navBorderGlow 3s infinite;
+}
+
+@keyframes navBorderGlow {
+    0% { width: 0%; left: 0; }
+    50% { width: 100%; left: 0; }
+    100% { width: 0%; left: 100%; }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.nav h2 {
+    color: white;
+    font-size: 28px;
+}
+
+.nav h2 span {
+    color: red;
+}
+
+.nav ul {
+    position: static;
+    transform: none;
+    display: flex;
+    gap: 40px;
+    list-style: none;
+}
+
+.nav ul li {
+    position: relative;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 18px;
+    transition: 0.3s;
+}
+
+.nav ul li::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -5px;
+    width: 0%;
+    height: 2px;
+    background: red;
+    transition: 0.4s;
+}
+
+.nav ul li:hover::after {
+    width: 100%;
+    left: 0;
+}
+
+.nav ul li:hover {
+    color: white;
+}
+
+.login-btn {
+    font-size: 18px;
+    padding: 10px 35px;
+    border-radius: 30px;
+    background-color: red;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.login-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(255,0,0,0.6);
+}
+
+/* ===== HERO SECTION ===== */
+.content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 40px 20px 60px;
+    animation: fadeInUp 0.8s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.left {
+    max-width: 900px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.left h1 {
+    font-size: 75px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(255,255,255,0.2);
+    margin-bottom: 20px;
+    min-height: 180px;
+    line-height: 1.2;
+}
+
+/* مؤشر الكتابة الوامض - تحسين بسيط */
+.typing::after {
+    content: "|";
+    animation: blink 0.8s infinite;
+    font-weight: normal;
+    color: red;
+    text-shadow: 0 0 5px red;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.left p {
+    margin: 0 0 25px 0;
+    line-height: 1.6;
+    font-size: 18px;
+    color: #ccc;
+    max-width: 600px;
+    animation: fadeIn 1s ease 0.3s both;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ===== BUTTONS ===== */
+.main-btn {
+    padding: 16px 40px;
+    font-size: 18px;
+    border-radius: 40px;
+    background-color: red;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-bottom: 60px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    animation: fadeIn 1s ease 0.5s both;
+}
+
+.main-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 40px rgba(255,0,0,0.6);
+}
+
+/* ===== TEAM CARDS ===== */
+.team-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 20px;
+}
+
+.team-card {
+    width: 180px;
+    z-index: 3;
+    animation: cardPop 0.5s ease backwards;
+    transition: transform 0.3s;
+}
+
+/* نبض خفيف جداً مستمر */
+.team-card:hover {
+    transform: translateY(-8px);
+}
+
+.team-card:nth-child(1) { animation-delay: 0.1s; }
+.team-card:nth-child(2) { animation-delay: 0.2s; }
+.team-card:nth-child(3) { animation-delay: 0.3s; }
+.team-card:nth-child(4) { animation-delay: 0.4s; }
+.team-card:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes cardPop {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.team-img-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(4px);
+    border-radius: 20px;
+    padding: 15px 10px;
+    transition: 0.3s;
+}
+
+.team-card:hover .team-img-wrapper {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 20px rgba(255,0,0,0.2);
+}
+
+.team-img {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid #ff0000;
+    box-shadow: 0 0 15px rgba(255,0,0,0.5);
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.team-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.team-img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(255,0,0,0.8);
+}
+
+.scan-line {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background: linear-gradient(to bottom, transparent, rgba(255,0,0,0.7), transparent);
+    animation: scan 2s infinite;
+    pointer-events: none;
+}
+
+@keyframes scan {
+    0% { top: -100%; }
+    50% { top: 100%; }
+    100% { top: 100%; }
+}
+
+.team-data {
+    text-align: center;
+    margin-top: 12px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: 0.3s;
+}
+
+.team-img:hover + .team-data,
+.team-img-wrapper:hover .team-data {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.team-data h3 {
+    color: #ff0000;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.team-data p {
+    color: #ff6666;
+    font-size: 12px;
+}
+
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .nav {
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .nav ul {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 25px;
+    }
+
+    .left h1 {
+        font-size: 45px;
+        min-height: 120px;
+    }
+
+    .left p {
+        font-size: 16px;
+        padding: 0 15px;
+    }
+
+    .main-btn {
+        margin-bottom: 40px;
+    }
+
+    .team-container {
+        gap: 25px;
+    }
+
+    .team-card {
+        width: 150px;
+    }
+
+    .team-img {
+        width: 130px;
+        height: 130px;
+    }
+
+    .team-img-wrapper {
+        padding: 10px 8px;
+    }
+    
+}

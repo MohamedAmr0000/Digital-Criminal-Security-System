@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Security</title>
+    <link rel="stylesheet" href="s.css">
+</head>
+<body>
+
+<div class="main">
+
+    <!-- NAVBAR -->
+    <div class="nav">
+        <h2>CYBER<span>SEC</span></h2>
+
+        <ul>
+            <li>Home</li>
+            <li>Services</li>
+            <li>Investigations</li>
+            <li>Contact</li>
+        </ul>
+
+        <button class="login-btn">Login</button>
+    </div>
+
+    <!-- HERO -->
+    <div class="content">
+        <div class="left">
+
+            <h1 class="typing" id="typed-title"></h1>
+
+            <p>Lie detection through advanced algorithms and high-quality software.</p>
+
+            <button class="main-btn">Start Now</button>
+
+<!-- الكروت -->
+<div class="team-container">
+
+    <!-- BASMA -->
+    <a href="login.html?user=Basma.jpg" class="card-link">
+        <div class="team-card">
+            <div class="team-img-wrapper">
+                <div class="team-img">
+                    <img src="image/Basma.jpg">
+                    <span class="scan-line"></span>
+                </div>
+
+                <div class="team-data">
+                    <h3>Basma Ibrahim</h3>
+                    <p>System Hardware Administrator</p>
+                </div>
+            </div>
+        </div>
+    </a>
+
+    <!-- MOHAMED AMR -->
+    <a href="login.html?user=me.jpg" class="card-link">
+        <div class="team-card">
+            <div class="team-img-wrapper">
+                <div class="team-img">
+                    <img src="image/me.jpg">
+                    <span class="scan-line"></span>
+                </div>
+
+                <div class="team-data">
+                    <h3>Mohamed Amr</h3>
+                    <p>Head of Team</p>
+                </div>
+            </div>
+        </div>
+    </a>
+
+    <!-- HABIBA -->
+    <a href="login.html?user=habiba.jpg" class="card-link">
+        <div class="team-card">
+            <div class="team-img-wrapper">
+                <div class="team-img">
+                    <img src="image/habiba.jpg">
+                    <span class="scan-line"></span>
+                </div>
+
+                <div class="team-data">
+                    <h3>Habiba Walied</h3>
+                    <p>Database Designer</p>
+                </div>
+            </div>
+        </div>
+    </a>
+
+    <!-- MOHAMED GAMAL -->
+    <a href="login.html?user=MoamedGmal.jpg" class="card-link">
+        <div class="team-card">
+            <div class="team-img-wrapper">
+                <div class="team-img">
+                    <img src="image/MoamedGmal.jpg">
+                    <span class="scan-line"></span>
+                </div>
+
+                <div class="team-data">
+                    <h3>Mohamed Gamal</h3>
+                    <p>BackEnd</p>
+                </div>
+            </div>
+        </div>
+    </a>
+
+    <!-- MALAK -->
+    <a href="login.html?user=malak.jpg" class="card-link">
+        <div class="team-card">
+            <div class="team-img-wrapper">
+                <div class="team-img">
+                    <img src="image/malak.jpg">
+                    <span class="scan-line"></span>
+                </div>
+
+                <div class="team-data">
+                    <h3>Malak</h3>
+                    <p>Front End</p>
+                </div>
+            </div>
+        </div>
+    </a>
+
+</div>
+        </div>
+    </div>
+
+</div>
+
+
+<script >// ===== تأثير الكتابة (Typing Effect) - سطرين =====
+const titleElement = document.getElementById('typed-title');
+const lines = ["Cybersecurity", "Student"];
+let lineIndex = 0;
+let charIndex = 0;
+
+function writeText() {
+    if (lineIndex < lines.length) {
+        if (charIndex < lines[lineIndex].length) {
+            titleElement.innerHTML += lines[lineIndex][charIndex];
+            charIndex++;
+            setTimeout(writeText, 120);
+        } else {
+            // نهاية السطر الحالي
+            if (lineIndex < lines.length - 1) {
+                titleElement.innerHTML += "<br>";
+            }
+            lineIndex++;
+            charIndex = 0;
+            setTimeout(writeText, 120);
+        }
+    }
+}
+
+writeText();
+
+// ===== تغيير الخلفية عند hover على الكروت =====
+const teamCards = document.querySelectorAll('.team-card');
+const mainSection = document.querySelector('.main');
+const defaultBg = "url('https://www.cnet.com/a/img/resize/9ec5a14bed80097b4d0004b676714ebbde266ba3/hub/2015/11/10/e7b12806-81cf-4d1c-9be8-5d61e4d15e87/mr-robot-rami-malek.jpg?auto=webp&fit=crop&height=675&width=1200')";
+
+teamCards.forEach(card => {
+    card.addEventListener("mouseenter", function () {
+        const img = this.querySelector("img");
+        if (img && img.getAttribute("src")) {
+            const imageUrl = img.getAttribute("src");
+            mainSection.style.backgroundImage = `url('${imageUrl}')`;
+        }
+    });
+
+    card.addEventListener("mouseleave", function () {
+        mainSection.style.backgroundImage = defaultBg;
+    });
+});</script>
+
+</body>
+</html>

@@ -1,0 +1,62 @@
+package com.security.auth;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+@WebServlet(name = "SaveInvestigationServlet", urlPatterns = {"/SaveInvestigationServlet"})
+public class SaveInvestigationServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        String sCode = request.getParameter("code");
+        String qText = request.getParameter("question");
+        
+        HttpSession session = request.getSession();
+        // هنجيب الـ ID بتاعك (محمد) اللي هو 5
+        Integer invId = (Integer) session.getAttribute("investigator_id");
+        if (invId == null) invId = 5; // قيمة احتياطية للتجربة
+
+        if (sCode != null && qText != null) {
+            try (Connection conn = DBConnection.getConnection()) {
+                // 1. التأكد من وجود الجلسة في جدول SESSIONS
+                String checkSql = "SELECT COUNT(*) FROM SESSIONS WHERE SESSION_CODE = ?";
+                PreparedStatement psCheck = conn.prepareStatement(checkSql);
+                psCheck.setString(1, sCode);
+                ResultSet rs = psCheck.executeQuery();
+                rs.next();
+                
+                if (rs.getInt(1) == 0) {
+                    // الجلسة جديدة.. نحفظها الأول
+                    String insSession = "INSERT INTO SESSIONS (SESSION_CODE, INVESTIGATOR_ID) VALUES (?, ?)";
+                    PreparedStatement psIns = conn.prepareStatement(insSession);
+                    psIns.setString(1, sCode);
+                    psIns.setInt(2, invId);
+                    psIns.executeUpdate();
+                }
+
+                // 2. حفظ السؤال في جدول QUESTIONS
+                String insQuestion = "INSERT INTO QUESTIONS (SESSION_CODE, QUESTION_TEXT) VALUES (?, ?)";
+                PreparedStatement psQ = conn.prepareStatement(insQuestion);
+                psQ.setString(1, sCode);
+                psQ.setString(2, qText);
+                psQ.executeUpdate();
+
+                response.getWriter().write("Success");
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+                response.getWriter().write("Error: " + e.getMessage());
+            }
+        }
+    }
+}
